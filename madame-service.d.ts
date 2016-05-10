@@ -14,5 +14,5 @@ export declare class MadameService {
     put(url: string, data: Object): Observable<Response>;
     authDelete(url: string): Observable<Response>;
     delete(url: string): Observable<Response>;
-    queryString(obj: any[]): string;
+    queryString(obj: any[] | any): string;
 }

@@ -48,7 +48,7 @@ export class MadameService {
     return this.http.delete(this.node + url);
   }
 
-  queryString(obj: any[]): string {
+  queryString(obj: any[]|any): string {
     let str: any[] = [];
     for (let p in obj) {
       if (obj.hasOwnProperty(p) && typeof obj[p] !== 'undefined') {
