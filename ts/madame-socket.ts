@@ -3,7 +3,7 @@ import * as Rx from 'rxjs/Rx';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
-import { MadameService } from './madame-service';
+import { MadameService } from '@strictd/madame/madame-service';
 
 declare const io: any;
 

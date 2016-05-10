@@ -15,7 +15,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var core_1 = require('@angular/core');
 var Rx = require('rxjs/Rx');
-var madame_service_1 = require('./madame-service');
+var madame_service_1 = require('@strictd/madame/madame-service');
 var MadameSocket = (function (_super) {
     __extends(MadameSocket, _super);
     function MadameSocket() {

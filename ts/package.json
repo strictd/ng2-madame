@@ -7,6 +7,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@angular/core": "2.0.0-rc.1",
+    "@strictd/madame": "git+http://ng2.git.strictd.com/madame.git",
     "angular2-jwt": "^0.1.15"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { MadameService } from './madame-service';
+import { MadameService } from '@strictd/madame/madame-service';
 export declare class MadameSocket extends MadameService {
     sockets: any;
     initFuncs: any;
