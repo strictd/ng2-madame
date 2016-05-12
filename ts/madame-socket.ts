@@ -49,9 +49,9 @@ export class MadameSocket extends MadameService implements OnInit {
 
 
 
-      console.log('load socket: ', socket);
+      //console.log('load socket: ', socket);
       this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.host, cookie: this.cookie }));
-      this.sockets[socket].auth.subscribe((data: any) => console.log(data));
+      this.sockets[socket].auth.subscribe((data: any) => {});
 
 
 /*

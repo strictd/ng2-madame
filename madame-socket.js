@@ -50,9 +50,8 @@ var MadameSocket = (function (_super) {
             this_1.sockets[socket].auth = Rx.Observable.create(function (observer) {
                 _t.sockets[socket].io.on('auth', function (data) { observer.next(data); });
             });
-            console.log('load socket: ', socket);
             this_1.sockets[socket].connect.subscribe(function () { return _t.sockets[socket].io.emit('authenticate', { host: _this.host, cookie: _this.cookie }); });
-            this_1.sockets[socket].auth.subscribe(function (data) { return console.log(data); });
+            this_1.sockets[socket].auth.subscribe(function (data) { });
             this_1.sockets[socket].io.on('socketReturn', function (cbData) {
                 if (typeof cbData === 'undefined' || typeof cbData.socketTag === 'undefined') {
                     return;
