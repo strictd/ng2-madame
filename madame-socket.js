@@ -24,8 +24,13 @@ var MadameSocket = (function (_super) {
         this.initFuncs = [];
         this.cookie = document.cookie;
         this.host = document.location.host;
-        this.node = 'localhost:3080';
+        this.node = MADAME_SOCKET_ENDPOINT;
     }
+    MadameSocket.prototype.ngOnInit = function () {
+        if (!this.node) {
+            alert('Must define MADAME_SOCKET_ENDPOINT in the global scope to Madame Sockets to work!');
+        }
+    };
     MadameSocket.prototype.openSocket = function (server) {
         var _this = this;
         if (server === void 0) { server = 'main'; }

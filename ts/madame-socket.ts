@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnInit } from '@angular/core';
 import * as Rx from 'rxjs/Rx';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
@@ -6,9 +6,10 @@ import { Observer } from 'rxjs/Observer';
 import { MadameService } from '@strictd/madame/madame-service';
 
 declare const io: any;
+declare var MADAME_SOCKET_ENDPOINT: string;
 
 @Injectable()
-export class MadameSocket extends MadameService {
+export class MadameSocket extends MadameService implements OnInit {
   public sockets: any = {};
   public initFuncs: any = [];
 
@@ -18,7 +19,11 @@ export class MadameSocket extends MadameService {
   //  public node: string = document.location.protocol+'//'+document.location.host+':8000'; //
   //  public node: string = document.location.protocol+'//192.168.0.8:8000';
   //  public node: string = '192.168.0.8:8000';
-  public node: string = 'localhost:3080';
+  public node: string = MADAME_SOCKET_ENDPOINT;
+
+  ngOnInit() {
+    if (!this.node) { alert('Must define MADAME_SOCKET_ENDPOINT in the global scope to Madame Sockets to work!'); }
+  }
 
   openSocket(server = 'main') {
     let _t = this;

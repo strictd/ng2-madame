@@ -5,12 +5,14 @@ import { contentHeaders } from './headers';
 import { AuthHttp } from 'angular2-jwt';
 
 declare var io: any;
+declare var MADAME_SERVICE_HTTP_ENDPOINT: string;
 
 @Injectable()
 export class MadameService {
 
   // public node: string = 'http://node.strictd.com:3000/';
-  public node: string = 'http://localhost:3080/';
+  //public node: string = 'http://localhost:3080/';
+  public node: string = MADAME_SERVICE_HTTP_ENDPOINT;
 
   http: Http;
   authHttp: AuthHttp;
@@ -18,6 +20,8 @@ export class MadameService {
   constructor(_http: Http, _authHttp: AuthHttp) {
     this.http = _http;
     this.authHttp = _authHttp;
+
+    if (!this.node) { alert('Must define MADAME_SERVICE_HTTP_ENDPOINT in the global scope to Madame to work!'); }
   }
 
   authGet(url: string): Observable<Response> {

@@ -14,9 +14,12 @@ var headers_1 = require('./headers');
 var angular2_jwt_1 = require('angular2-jwt');
 var MadameService = (function () {
     function MadameService(_http, _authHttp) {
-        this.node = 'http://localhost:3080/';
+        this.node = MADAME_SERVICE_HTTP_ENDPOINT;
         this.http = _http;
         this.authHttp = _authHttp;
+        if (!this.node) {
+            alert('Must define MADAME_SERVICE_HTTP_ENDPOINT in the global scope to Madame to work!');
+        }
     }
     MadameService.prototype.authGet = function (url) {
         return this.authHttp.get(this.node + url, { headers: headers_1.contentHeaders });
