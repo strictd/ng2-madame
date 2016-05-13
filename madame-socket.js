@@ -1,9 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -15,28 +10,60 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var core_1 = require('@angular/core');
 var Rx = require('rxjs/Rx');
-var madame_service_1 = require('@strictd/madame/madame-service');
-var MadameSocket = (function (_super) {
-    __extends(MadameSocket, _super);
+var MadameSocket = (function () {
     function MadameSocket() {
-        _super.apply(this, arguments);
         this.sockets = {};
         this.initFuncs = [];
-        this.cookie = document.cookie;
-        this.host = document.location.host;
-        this.node = MADAME_SOCKET_ENDPOINT;
+        this.serverList = {
+            'main': {
+                'url': 'http://localhost:3000/',
+                'host': document.location.host,
+                'cookie': document.cookie
+            }
+        };
     }
-    MadameSocket.prototype.ngOnInit = function () {
-        if (!this.node) {
-            alert('Must define MADAME_SOCKET_ENDPOINT in the global scope to Madame Sockets to work!');
+    MadameSocket.prototype.setServer = function (server, url, host, cookie) {
+        if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') {
+            url += '\\';
         }
+        this.serverList[server].url = url;
+        if (typeof host !== 'undefined') {
+            this.setHost(server, host);
+        }
+        if (typeof cookie !== 'undefined') {
+            this.setCookie(server, cookie);
+        }
+    };
+    MadameSocket.prototype.setHost = function (server, host, cookie) {
+        this.serverList[server].host = host;
+        if (typeof cookie !== 'undefined') {
+            this.setCookie(server, cookie);
+        }
+    };
+    MadameSocket.prototype.setCookie = function (server, cookie) {
+        this.serverList[server].cookie = cookie;
+    };
+    MadameSocket.prototype.getServers = function () {
+        return this.serverList;
+    };
+    MadameSocket.prototype.getServer = function (server) {
+        return this.serverList[server];
+    };
+    MadameSocket.prototype.getURL = function (server) {
+        return this.serverList[server].url;
+    };
+    MadameSocket.prototype.getCookie = function (server) {
+        return this.serverList[server].cookie;
+    };
+    MadameSocket.prototype.getHost = function (server) {
+        return this.serverList[server].host;
     };
     MadameSocket.prototype.openSocket = function (server) {
         var _this = this;
         if (server === void 0) { server = 'main'; }
         var _t = this;
         this.sockets[server] = {};
-        this.sockets[server].io = io.connect(this.node, {
+        this.sockets[server].io = io.connect(this.serverList[server].url, {
             'reconnection': true,
             'reconnectionDelay': 1000,
             'reconnectionAttempts': 10
@@ -50,7 +77,7 @@ var MadameSocket = (function (_super) {
             this_1.sockets[socket].auth = Rx.Observable.create(function (observer) {
                 _t.sockets[socket].io.on('auth', function (data) { observer.next(data); });
             });
-            this_1.sockets[socket].connect.subscribe(function () { return _t.sockets[socket].io.emit('authenticate', { host: _this.host, cookie: _this.cookie }); });
+            this_1.sockets[socket].connect.subscribe(function () { return _t.sockets[socket].io.emit('authenticate', { host: _this.serverList[server].host, cookie: _this.serverList[server].cookie }); });
             this_1.sockets[socket].auth.subscribe(function (data) { });
             this_1.sockets[socket].io.on('socketReturn', function (cbData) {
                 if (typeof cbData === 'undefined' || typeof cbData.socketTag === 'undefined') {
@@ -103,6 +130,6 @@ var MadameSocket = (function (_super) {
         __metadata('design:paramtypes', [])
     ], MadameSocket);
     return MadameSocket;
-}(madame_service_1.MadameService));
+}());
 exports.MadameSocket = MadameSocket;
 //# sourceMappingURL=madame-socket.js.map

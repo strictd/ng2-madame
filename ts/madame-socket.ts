@@ -1,35 +1,60 @@
-import { Injectable, OnInit } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as Rx from 'rxjs/Rx';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
-import { MadameService } from '@strictd/madame/madame-service';
+import { ServerList, ServerInfo } from './madame-service';
 
 declare const io: any;
-declare var MADAME_SOCKET_ENDPOINT: string;
 
 @Injectable()
-export class MadameSocket extends MadameService implements OnInit {
+export class MadameSocket {
   public sockets: any = {};
   public initFuncs: any = [];
+  public serverList: ServerList = {
+    'main': {
+      'url': 'http://localhost:3000/',
+      'host': document.location.host,
+      'cookie': document.cookie
+    }
+  };
 
-  public cookie: string = document.cookie;
-  //  public host: string = 'intranet.usautosales.com';
-  public host: string = document.location.host;
-  //  public node: string = document.location.protocol+'//'+document.location.host+':8000'; //
-  //  public node: string = document.location.protocol+'//192.168.0.8:8000';
-  //  public node: string = '192.168.0.8:8000';
-  public node: string = MADAME_SOCKET_ENDPOINT;
+  setServer(server: string, url: string, host?: string, cookie?: string): void {
+    if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') { url += '\\'; }
 
-  ngOnInit() {
-    if (!this.node) { alert('Must define MADAME_SOCKET_ENDPOINT in the global scope to Madame Sockets to work!'); }
+    this.serverList[server].url = url;
+    if (typeof host !== 'undefined') { this.setHost(server, host); }
+    if (typeof cookie !== 'undefined') { this.setCookie(server, cookie); }
+  }
+  setHost(server: string, host: string, cookie?: string): void {
+    this.serverList[server].host = host;
+    if (typeof cookie !== 'undefined') { this.setCookie(server, cookie); }
+  }
+  setCookie(server: string, cookie: string): void {
+    this.serverList[server].cookie = cookie;
+  }
+
+  getServers(): ServerList {
+    return this.serverList;
+  }
+  getServer(server: string): ServerInfo {
+    return this.serverList[server];
+  }
+  getURL(server: string): string {
+    return this.serverList[server].url;
+  }
+  getCookie(server: string): string {
+    return this.serverList[server].cookie;
+  }
+  getHost(server: string): string {
+    return this.serverList[server].host;
   }
 
   openSocket(server = 'main') {
     let _t = this;
 
     this.sockets[server] = {};
-    this.sockets[server].io = io.connect(this.node, {
+    this.sockets[server].io = io.connect(this.serverList[server].url, {
       'reconnection': true,
       'reconnectionDelay': 1000,
       'reconnectionAttempts': 10
@@ -50,7 +75,7 @@ export class MadameSocket extends MadameService implements OnInit {
 
 
       //console.log('load socket: ', socket);
-      this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.host, cookie: this.cookie }));
+      this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.serverList[server].host, cookie: this.serverList[server].cookie }));
       this.sockets[socket].auth.subscribe((data: any) => {});
 
 

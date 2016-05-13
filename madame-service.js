@@ -14,36 +14,83 @@ var headers_1 = require('./headers');
 var angular2_jwt_1 = require('angular2-jwt');
 var MadameService = (function () {
     function MadameService(_http, _authHttp) {
-        this.node = MADAME_SERVICE_HTTP_ENDPOINT;
+        this.serverList = {
+            'main': {
+                'url': 'http://localhost:3000/',
+                'host': document.location.host,
+                'cookie': document.cookie
+            }
+        };
         this.http = _http;
         this.authHttp = _authHttp;
-        if (!this.node) {
-            alert('Must define MADAME_SERVICE_HTTP_ENDPOINT in the global scope to Madame to work!');
-        }
     }
-    MadameService.prototype.authGet = function (url) {
-        return this.authHttp.get(this.node + url, { headers: headers_1.contentHeaders });
+    MadameService.prototype.setServer = function (server, url, host, cookie) {
+        if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') {
+            url += '\\';
+        }
+        this.serverList[server].url = url;
+        if (typeof host !== 'undefined') {
+            this.setHost(server, host);
+        }
+        if (typeof cookie !== 'undefined') {
+            this.setCookie(server, cookie);
+        }
     };
-    MadameService.prototype.get = function (url) {
-        return this.http.get(this.node + url, { headers: headers_1.contentHeaders });
+    MadameService.prototype.setHost = function (server, host, cookie) {
+        this.serverList[server].host = host;
+        if (typeof cookie !== 'undefined') {
+            this.setCookie(server, cookie);
+        }
     };
-    MadameService.prototype.authPost = function (url, data) {
-        return this.authHttp.post(this.node + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    MadameService.prototype.setCookie = function (server, cookie) {
+        this.serverList[server].cookie = cookie;
     };
-    MadameService.prototype.post = function (url, data) {
-        return this.http.post(this.node + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    MadameService.prototype.getServers = function () {
+        return this.serverList;
     };
-    MadameService.prototype.authPut = function (url, data) {
-        return this.authHttp.put(this.node + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    MadameService.prototype.getServer = function (server) {
+        return this.serverList[server];
     };
-    MadameService.prototype.put = function (url, data) {
-        return this.http.put(this.node + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    MadameService.prototype.getURL = function (server) {
+        return this.serverList[server].url;
     };
-    MadameService.prototype.authDelete = function (url) {
-        return this.authHttp.delete(this.node + url);
+    MadameService.prototype.getCookie = function (server) {
+        return this.serverList[server].cookie;
     };
-    MadameService.prototype.delete = function (url) {
-        return this.http.delete(this.node + url);
+    MadameService.prototype.getHost = function (server) {
+        return this.serverList[server].host;
+    };
+    MadameService.prototype.authGet = function (url, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.authHttp.get(this.getURL(server) + url, { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.get = function (url, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.http.get(this.getURL(server) + url, { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.authPost = function (url, data, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.authHttp.post(this.getURL(server) + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.post = function (url, data, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.http.post(this.getURL(server) + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.authPut = function (url, data, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.authHttp.put(this.getURL(server) + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.put = function (url, data, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.http.put(this.getURL(server) + url, JSON.stringify(data), { headers: headers_1.contentHeaders });
+    };
+    MadameService.prototype.authDelete = function (url, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.authHttp.delete(this.getURL(server) + url);
+    };
+    MadameService.prototype.delete = function (url, server) {
+        if (server === void 0) { server = 'main'; }
+        return this.http.delete(this.getURL(server) + url);
     };
     MadameService.prototype.queryString = function (obj) {
         var str = [];
