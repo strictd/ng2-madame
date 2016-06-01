@@ -1,5 +1,5 @@
-import { ServerList, ServerInfo } from './madame-service';
-export declare class MadameSocket {
+import { MadameService, ServerList, ServerInfo } from './madame-service';
+export declare class MadameSocket extends MadameService {
     sockets: any;
     initFuncs: any;
     serverList: ServerList;
@@ -11,7 +11,7 @@ export declare class MadameSocket {
     getURL(server: string): string;
     getCookie(server: string): string;
     getHost(server: string): string;
-    openSocket(server?: string): void;
+    openSocket(server?: string, jwt?: string): void;
     emit(socket: string, eventName: string, data: any, _cb?: Function, _cbfail?: Function): void;
     s4(): string;
 }

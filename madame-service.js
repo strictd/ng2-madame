@@ -25,8 +25,11 @@ var MadameService = (function () {
         this.authHttp = _authHttp;
     }
     MadameService.prototype.setServer = function (server, url, host, cookie) {
-        if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') {
-            url += '\\';
+        if (url.trim().slice(-1) === '\\') {
+            url = url.substring(0, url.length - 1);
+        }
+        if (url.trim().slice(-1) !== '/') {
+            url += '/';
         }
         this.serverList[server].url = url;
         if (typeof host !== 'undefined') {

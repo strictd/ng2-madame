@@ -34,7 +34,8 @@ export class MadameService {
   }
 
   setServer(server: string, url: string, host?: string, cookie?: string): void {
-    if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') { url += '\\'; }  
+    if (url.trim().slice(-1) === '\\') { url = url.substring(0, url.length - 1); }
+    if (url.trim().slice(-1) !== '/') { url += '/'; }
 
     this.serverList[server].url = url;
     if (typeof host !== 'undefined') { this.setHost(server, host); }

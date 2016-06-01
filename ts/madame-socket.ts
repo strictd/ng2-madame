@@ -3,24 +3,24 @@ import * as Rx from 'rxjs/Rx';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
-import { ServerList, ServerInfo } from './madame-service';
+import { MadameService, ServerList, ServerInfo } from './madame-service';
 
 declare const io: any;
 
 @Injectable()
-export class MadameSocket {
+export class MadameSocket extends MadameService {
   public sockets: any = {};
   public initFuncs: any = [];
   public serverList: ServerList = {
     'main': {
-      'url': 'http://localhost:3000/',
+      'url': 'http://localhost:3000',
       'host': document.location.host,
       'cookie': document.cookie
     }
   };
 
   setServer(server: string, url: string, host?: string, cookie?: string): void {
-    if (url.trim().slice(-1) !== '/' || url.trim().slice(-1) !== '\\') { url += '\\'; }
+    if (url.trim().slice(-1) == '/' || url.trim().slice(-1) === '\\') { url = url.substring(0, url.length - 1); }
 
     this.serverList[server].url = url;
     if (typeof host !== 'undefined') { this.setHost(server, host); }
@@ -50,7 +50,7 @@ export class MadameSocket {
     return this.serverList[server].host;
   }
 
-  openSocket(server = 'main') {
+  openSocket(server = 'main', jwt?: string) {
     let _t = this;
 
     this.sockets[server] = {};
@@ -75,8 +75,17 @@ export class MadameSocket {
 
 
       //console.log('load socket: ', socket);
-      this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.serverList[server].host, cookie: this.serverList[server].cookie }));
-      this.sockets[socket].auth.subscribe((data: any) => {});
+      this.sockets[socket].connect.subscribe(() => {
+        _t.sockets[socket].io.on('authenticated', function () {
+
+        })
+        .emit('authenticate', { token: jwt });
+      });
+
+      //this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.serverList[server].host, cookie: this.serverList[server].cookie }));
+      this.sockets[socket].auth.subscribe((data: any) => {
+        console.log('We have authed');
+      });
 
 
 /*

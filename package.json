@@ -1,6 +1,6 @@
 {
   "name": "@strictd/madame",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "HTTP / HTTPS Service and Socket middleman library",
   "main": "madame-service.js",
   "author": "Gary <gravity.addiction@gmail.com>",
