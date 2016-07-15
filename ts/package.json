@@ -6,25 +6,24 @@
   "author": "Gary <gravity.addiction@gmail.com>",
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
-    "@angular/core": "2.0.0-rc.1",
-    "@strictd/madame": "git+http://ng2.git.strictd.com/madame.git",
-    "angular2-jwt": "^0.1.15"
+    "@angular/core": "2.0.0-rc.4",
+    "angular2-jwt": "^0.1.15",
+    "rxjs": "^5.0.0-beta.6"
   },
   "devDependencies": {
-    "@angular/common": "^2.0.0-rc.1",
-    "@angular/compiler": "^2.0.0-rc.1",
-    "@angular/http": "2.0.0-rc.1",
-    "@angular/platform-browser": "^2.0.0-rc.1",
-    "@angular/platform-browser-dynamic": "^2.0.0-rc.1",
+    "@angular/common": "^2.0.0-rc.4",
+    "@angular/compiler": "^2.0.0-rc.4",
+    "@angular/http": "2.0.0-rc.4",
+    "@angular/platform-browser": "^2.0.0-rc.4",
+    "@angular/platform-browser-dynamic": "^2.0.0-rc.4",
     "es6-shim": "^0.35.0",
-    "typescript": "~1.5.3",
-    "reflect-metadata": "0.1.2",
+    "reflect-metadata": "^0.1.3",
     "rxjs": "5.0.0-beta.6",
-    "systemjs": "0.19.27",
+    "systemjs": "^0.19.31",
     "tslint": "^3.3.0",
     "tslint-stylish": "^2.1.0-beta",
     "typescript": "^1.8.0",
-    "typings": "^0.7.12",
+    "typings": "^1.3.1",
     "zone.js": "^0.6.12"
   }
 }
