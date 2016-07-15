@@ -1,4 +1,9 @@
 "use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,12 +13,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-const core_1 = require('@angular/core');
-const Rx = require('rxjs/Rx');
-const madame_service_1 = require('./madame-service');
-let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
-    constructor(...args) {
-        super(...args);
+var core_1 = require('@angular/core');
+var Rx = require('rxjs/Rx');
+var madame_service_1 = require('./madame-service');
+var MadameSocket = (function (_super) {
+    __extends(MadameSocket, _super);
+    function MadameSocket() {
+        _super.apply(this, arguments);
         this.sockets = {};
         this.initFuncs = [];
         this.serverList = {
@@ -24,7 +30,7 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
             }
         };
     }
-    setServer(server, url, host, cookie) {
+    MadameSocket.prototype.setServer = function (server, url, host, cookie) {
         if (url.trim().slice(-1) == '/' || url.trim().slice(-1) === '\\') {
             url = url.substring(0, url.length - 1);
         }
@@ -35,33 +41,34 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
         if (typeof cookie !== 'undefined') {
             this.setCookie(server, cookie);
         }
-    }
-    setHost(server, host, cookie) {
+    };
+    MadameSocket.prototype.setHost = function (server, host, cookie) {
         this.serverList[server].host = host;
         if (typeof cookie !== 'undefined') {
             this.setCookie(server, cookie);
         }
-    }
-    setCookie(server, cookie) {
+    };
+    MadameSocket.prototype.setCookie = function (server, cookie) {
         this.serverList[server].cookie = cookie;
-    }
-    getServers() {
+    };
+    MadameSocket.prototype.getServers = function () {
         return this.serverList;
-    }
-    getServer(server) {
+    };
+    MadameSocket.prototype.getServer = function (server) {
         return this.serverList[server];
-    }
-    getURL(server) {
+    };
+    MadameSocket.prototype.getURL = function (server) {
         return this.serverList[server].url;
-    }
-    getCookie(server) {
+    };
+    MadameSocket.prototype.getCookie = function (server) {
         return this.serverList[server].cookie;
-    }
-    getHost(server) {
+    };
+    MadameSocket.prototype.getHost = function (server) {
         return this.serverList[server].host;
-    }
-    openSocket(server = 'main', jwt) {
-        let _t = this;
+    };
+    MadameSocket.prototype.openSocket = function (server, jwt) {
+        if (server === void 0) { server = 'main'; }
+        var _t = this;
         this.sockets[server] = {};
         this.sockets[server].io = io.connect(this.serverList[server].url, {
             'reconnection': true,
@@ -69,23 +76,23 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
             'reconnectionAttempts': 10
         });
         this.sockets[server].calls = {};
-        for (let socket in this.sockets) {
-            this.sockets[socket].connect = Rx.Observable.create(function (observer) {
-                let ob = observer;
+        var _loop_1 = function(socket) {
+            this_1.sockets[socket].connect = Rx.Observable.create(function (observer) {
+                var ob = observer;
                 _t.sockets[socket].io.on('connect', function () { ob.next(true); });
             });
-            this.sockets[socket].auth = Rx.Observable.create(function (observer) {
+            this_1.sockets[socket].auth = Rx.Observable.create(function (observer) {
                 _t.sockets[socket].io.on('auth', function (data) { observer.next(data); });
             });
-            this.sockets[socket].connect.subscribe(() => {
+            this_1.sockets[socket].connect.subscribe(function () {
                 _t.sockets[socket].io.on('authenticated', function () {
                 })
                     .emit('authenticate', { token: jwt });
             });
-            this.sockets[socket].auth.subscribe((data) => {
+            this_1.sockets[socket].auth.subscribe(function (data) {
                 console.log('We have authed');
             });
-            this.sockets[socket].io.on('socketReturn', function (cbData) {
+            this_1.sockets[socket].io.on('socketReturn', function (cbData) {
                 if (typeof cbData === 'undefined' || typeof cbData.socketTag === 'undefined') {
                     return;
                 }
@@ -97,7 +104,7 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
                 }
                 delete _t.sockets[socket].calls[cbData.socketTag];
             });
-            this.sockets[socket].io.on('socketFail', function (cbData) {
+            this_1.sockets[socket].io.on('socketFail', function (cbData) {
                 if (typeof cbData === 'undefined' || typeof cbData.socketTag === 'undefined') {
                     return;
                 }
@@ -109,9 +116,15 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
                 }
                 delete _t.sockets[socket].calls[cbData.socketTag];
             });
+        };
+        var this_1 = this;
+        for (var socket in this.sockets) {
+            _loop_1(socket);
         }
-    }
-    emit(socket, eventName, data, _cb = null, _cbfail = null) {
+    };
+    MadameSocket.prototype.emit = function (socket, eventName, data, _cb, _cbfail) {
+        if (_cb === void 0) { _cb = null; }
+        if (_cbfail === void 0) { _cbfail = null; }
         if (typeof data.socketTag === 'undefined') {
             data.socketTag = 'b' + this.s4() + this.s4() + this.s4();
         }
@@ -123,12 +136,13 @@ let MadameSocket = class MadameSocket extends madame_service_1.MadameService {
             this.sockets[socket].calls[data.socketTag].callfail = _cbfail;
         }
         this.sockets[socket].io.emit(eventName, data, function () { alert('Failed To Emit'); });
-    }
-    s4() { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); }
-};
-MadameSocket = __decorate([
-    core_1.Injectable(), 
-    __metadata('design:paramtypes', [])
-], MadameSocket);
+    };
+    MadameSocket.prototype.s4 = function () { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); };
+    MadameSocket = __decorate([
+        core_1.Injectable(), 
+        __metadata('design:paramtypes', [])
+    ], MadameSocket);
+    return MadameSocket;
+}(madame_service_1.MadameService));
 exports.MadameSocket = MadameSocket;
 //# sourceMappingURL=madame-socket.js.map
