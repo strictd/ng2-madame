@@ -22,7 +22,8 @@ export interface HeaderList {
   [index: string]: HeaderInfo;
 }
 
-export interface MadamePut {
+export interface MadameQuery {
+  method: string;
   url: string;
   data: any;
   server?: string;
@@ -79,37 +80,60 @@ export class MadameService {
     return this.serverList[server].host;
   }
 
-  authGet(url: string, server = 'main'): Observable<Response> {
-    return this.authHttp.get(this.getURL(server) + url, {headers: this.defaultHeaders()});
+  authGet(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
+    return this.authHttp.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
   }
-  get(url: string, server = 'main'): Observable<Response> {
-    return this.http.get(this.getURL(server) + url, {headers: this.defaultHeaders()});
+  get(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
+    return this.http.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
   }
 
   authPost(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.authHttp.post(this.getURL(server) + url, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
+    return this.authHttp.post(`${this.getURL(server)}${url}`, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
   }
   post(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.http.post(this.getURL(server) + url, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
+    return this.http.post(`${this.getURL(server)}${url}`, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
   }
 
   authPut(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.authHttp.put(this.getURL(server) + url, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
+    return this.authHttp.put(`${this.getURL(server)}${url}`, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
   }
   put(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.http.put(this.getURL(server) + url, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
+    return this.http.put(`${this.getURL(server)}${url}`, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
   }
-  tryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>): Observable<Response> {
+
+  authDelete(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
+    return this.authHttp.delete(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
+  }
+  delete(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
+    return this.http.delete(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
+  }  
+
+
+  createAuthQueryFromMethod(query: MadameQuery): Observable<Response> {
+    if (query.method === 'put') {
+      return this.authPut(query.url, query.data, query.server, query.headers);
+    } else if (query.method === 'post') {
+      return this.authPost(query.url, query.data, query.server, query.headers);
+    } else if (query.method === 'delete') {
+      return this.authDelete(query.url, query.server);
+    } else {
+      return this.authGet(query.url, query.server, query.headers);
+    }
+  }
+
+  tryMadame(query: MadameQuery, loginObserv: Observer<any>) {
     return Observable.create(observer => {
-      this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(
+      let authQuery = this.createAuthQueryFromMethod(query);
+
+      authQuery.subscribe(
         resp => {
           if (resp.status === 401) { 
-            this.retryAuthPut(putQuery, loginObserv, observer);
+            this.retryMadame(query, loginObserv, observer);
           } else { observer.next(resp.json()); }
 
         }, err => {
           if (err.status === 401) { 
-            this.retryAuthPut(putQuery, loginObserv, observer);
+            this.retryMadame(query, loginObserv, observer);
           } else {
             observer.error(err);
           }
@@ -117,15 +141,21 @@ export class MadameService {
       );
     });
   }
-  retryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>, observer: Observer<any>) {
+  
+  retryMadame(query: MadameQuery, loginObserv: Observer<any>, observer: Observer<any>) {
     Observable.create(observ => {
       loginObserv.next(observ);
     }).subscribe(
       resp => {
-        this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(
-          resp => observer.next(resp.json()),
-          err => observer.error(err)
-        );
+        if (resp === true) {
+          let retryAuthQuery = this.createAuthQueryFromMethod(query);
+          retryAuthQuery.subscribe(
+            resp => observer.next(resp.json()),
+            err => observer.error(err)
+          );
+        } else {
+          this.retryMadame(query, loginObserv, observer);
+        }
       },
       err => observer.error(err)
     );
@@ -134,12 +164,6 @@ export class MadameService {
 
 
 
-  authDelete(url: string, server = 'main'): Observable<Response> {
-    return this.authHttp.delete(this.getURL(server) + url);
-  }
-  delete(url: string, server = 'main'): Observable<Response> {
-    return this.http.delete(this.getURL(server) + url);
-  }
 
   defaultHeaders(toAdd?: HeaderList): Headers {
     let headers = new Headers();

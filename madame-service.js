@@ -63,43 +63,66 @@ var MadameService = (function () {
     MadameService.prototype.getHost = function (server) {
         return this.serverList[server].host;
     };
-    MadameService.prototype.authGet = function (url, server) {
+    MadameService.prototype.authGet = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.authHttp.get(this.getURL(server) + url, { headers: this.defaultHeaders() });
+        return this.authHttp.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
     };
-    MadameService.prototype.get = function (url, server) {
+    MadameService.prototype.get = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.http.get(this.getURL(server) + url, { headers: this.defaultHeaders() });
+        return this.http.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.authPost = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.authHttp.post(this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
+        return this.authHttp.post("" + this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.post = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.http.post(this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
+        return this.http.post("" + this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.authPut = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.authHttp.put(this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
+        return this.authHttp.put("" + this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.put = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.http.put(this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
+        return this.http.put("" + this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
     };
-    MadameService.prototype.tryAuthPut = function (putQuery, loginObserv) {
+    MadameService.prototype.authDelete = function (url, server, headers) {
+        if (server === void 0) { server = 'main'; }
+        return this.authHttp.delete("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
+    };
+    MadameService.prototype.delete = function (url, server, headers) {
+        if (server === void 0) { server = 'main'; }
+        return this.http.delete("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
+    };
+    MadameService.prototype.createAuthQueryFromMethod = function (query) {
+        if (query.method === 'put') {
+            return this.authPut(query.url, query.data, query.server, query.headers);
+        }
+        else if (query.method === 'post') {
+            return this.authPost(query.url, query.data, query.server, query.headers);
+        }
+        else if (query.method === 'delete') {
+            return this.authDelete(query.url, query.server);
+        }
+        else {
+            return this.authGet(query.url, query.server, query.headers);
+        }
+    };
+    MadameService.prototype.tryMadame = function (query, loginObserv) {
         var _this = this;
         return rxjs_1.Observable.create(function (observer) {
-            _this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(function (resp) {
+            var authQuery = _this.createAuthQueryFromMethod(query);
+            authQuery.subscribe(function (resp) {
                 if (resp.status === 401) {
-                    _this.retryAuthPut(putQuery, loginObserv, observer);
+                    _this.retryMadame(query, loginObserv, observer);
                 }
                 else {
                     observer.next(resp.json());
                 }
             }, function (err) {
                 if (err.status === 401) {
-                    _this.retryAuthPut(putQuery, loginObserv, observer);
+                    _this.retryMadame(query, loginObserv, observer);
                 }
                 else {
                     observer.error(err);
@@ -107,21 +130,19 @@ var MadameService = (function () {
             });
         });
     };
-    MadameService.prototype.retryAuthPut = function (putQuery, loginObserv, observer) {
+    MadameService.prototype.retryMadame = function (query, loginObserv, observer) {
         var _this = this;
         rxjs_1.Observable.create(function (observ) {
             loginObserv.next(observ);
         }).subscribe(function (resp) {
-            _this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(function (resp) { return observer.next(resp.json()); }, function (err) { return observer.error(err); });
+            if (resp === true) {
+                var retryAuthQuery = _this.createAuthQueryFromMethod(query);
+                retryAuthQuery.subscribe(function (resp) { return observer.next(resp.json()); }, function (err) { return observer.error(err); });
+            }
+            else {
+                _this.retryMadame(query, loginObserv, observer);
+            }
         }, function (err) { return observer.error(err); });
-    };
-    MadameService.prototype.authDelete = function (url, server) {
-        if (server === void 0) { server = 'main'; }
-        return this.authHttp.delete(this.getURL(server) + url);
-    };
-    MadameService.prototype.delete = function (url, server) {
-        if (server === void 0) { server = 'main'; }
-        return this.http.delete(this.getURL(server) + url);
     };
     MadameService.prototype.defaultHeaders = function (toAdd) {
         var headers = new http_1.Headers();

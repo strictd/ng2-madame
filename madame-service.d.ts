@@ -16,7 +16,8 @@ export interface HeaderInfo {
 export interface HeaderList {
     [index: string]: HeaderInfo;
 }
-export interface MadamePut {
+export interface MadameQuery {
+    method: string;
     url: string;
     data: any;
     server?: string;
@@ -35,16 +36,17 @@ export declare class MadameService {
     getURL(server: string): string;
     getCookie(server: string): string;
     getHost(server: string): string;
-    authGet(url: string, server?: string): Observable<Response>;
-    get(url: string, server?: string): Observable<Response>;
+    authGet(url: string, server?: string, headers?: HeaderList): Observable<Response>;
+    get(url: string, server?: string, headers?: HeaderList): Observable<Response>;
     authPost(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
     post(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
     authPut(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
     put(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
-    tryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>): Observable<Response>;
-    retryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>, observer: Observer<any>): void;
-    authDelete(url: string, server?: string): Observable<Response>;
-    delete(url: string, server?: string): Observable<Response>;
+    authDelete(url: string, server?: string, headers?: HeaderList): Observable<Response>;
+    delete(url: string, server?: string, headers?: HeaderList): Observable<Response>;
+    createAuthQueryFromMethod(query: MadameQuery): Observable<Response>;
+    tryMadame(query: MadameQuery, loginObserv: Observer<any>): any;
+    retryMadame(query: MadameQuery, loginObserv: Observer<any>, observer: Observer<any>): void;
     defaultHeaders(toAdd?: HeaderList): Headers;
     addHeaders(toAdd: HeaderList, cur?: Headers): Headers;
     queryString(obj: any): string;
