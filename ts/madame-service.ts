@@ -25,7 +25,8 @@ export interface HeaderList {
 export interface MadameQuery {
   method: string;
   url: string;
-  data: any;
+  data?: any;
+  query_string?: any;
   server?: string;
   headers?: HeaderList;
 }
@@ -110,14 +111,19 @@ export class MadameService {
 
 
   createAuthQueryFromMethod(query: MadameQuery): Observable<Response> {
+    let url = query.url;
+    if (!!query.query_string && Object.keys(query.query_string).length) {
+      url = `${url}?${this.queryString(query.query_string)}`;
+    }
+
     if (query.method === 'put') {
-      return this.authPut(query.url, query.data, query.server, query.headers);
+      return this.authPut(url, query.data, query.server, query.headers);
     } else if (query.method === 'post') {
-      return this.authPost(query.url, query.data, query.server, query.headers);
+      return this.authPost(url, query.data, query.server, query.headers);
     } else if (query.method === 'delete') {
-      return this.authDelete(query.url, query.server);
+      return this.authDelete(url, query.server);
     } else {
-      return this.authGet(query.url, query.server, query.headers);
+      return this.authGet(url, query.server, query.headers);
     }
   }
 
@@ -129,7 +135,7 @@ export class MadameService {
         resp => {
           if (resp.status === 401) { 
             this.retryMadame(query, loginObserv, observer);
-          } else { observer.next(resp.json()); }
+          } else { observer.next(resp); }
 
         }, err => {
           if (err.status === 401) { 
@@ -150,7 +156,7 @@ export class MadameService {
         if (resp === true) {
           let retryAuthQuery = this.createAuthQueryFromMethod(query);
           retryAuthQuery.subscribe(
-            resp => observer.next(resp.json()),
+            resp => observer.next(resp),
             err => observer.error(err)
           );
         } else {

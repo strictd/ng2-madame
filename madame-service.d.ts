@@ -19,7 +19,8 @@ export interface HeaderList {
 export interface MadameQuery {
     method: string;
     url: string;
-    data: any;
+    data?: any;
+    query_string?: any;
     server?: string;
     headers?: HeaderList;
 }

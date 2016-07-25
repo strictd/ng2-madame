@@ -96,17 +96,21 @@ var MadameService = (function () {
         return this.http.delete("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.createAuthQueryFromMethod = function (query) {
+        var url = query.url;
+        if (!!query.query_string && Object.keys(query.query_string).length) {
+            url = url + "?" + this.queryString(query.query_string);
+        }
         if (query.method === 'put') {
-            return this.authPut(query.url, query.data, query.server, query.headers);
+            return this.authPut(url, query.data, query.server, query.headers);
         }
         else if (query.method === 'post') {
-            return this.authPost(query.url, query.data, query.server, query.headers);
+            return this.authPost(url, query.data, query.server, query.headers);
         }
         else if (query.method === 'delete') {
-            return this.authDelete(query.url, query.server);
+            return this.authDelete(url, query.server);
         }
         else {
-            return this.authGet(query.url, query.server, query.headers);
+            return this.authGet(url, query.server, query.headers);
         }
     };
     MadameService.prototype.tryMadame = function (query, loginObserv) {
@@ -118,7 +122,7 @@ var MadameService = (function () {
                     _this.retryMadame(query, loginObserv, observer);
                 }
                 else {
-                    observer.next(resp.json());
+                    observer.next(resp);
                 }
             }, function (err) {
                 if (err.status === 401) {
@@ -137,7 +141,7 @@ var MadameService = (function () {
         }).subscribe(function (resp) {
             if (resp === true) {
                 var retryAuthQuery = _this.createAuthQueryFromMethod(query);
-                retryAuthQuery.subscribe(function (resp) { return observer.next(resp.json()); }, function (err) { return observer.error(err); });
+                retryAuthQuery.subscribe(function (resp) { return observer.next(resp); }, function (err) { return observer.error(err); });
             }
             else {
                 _this.retryMadame(query, loginObserv, observer);
