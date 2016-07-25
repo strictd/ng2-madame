@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var core_1 = require('@angular/core');
 var http_1 = require('@angular/http');
+var rxjs_1 = require('rxjs');
 var angular2_jwt_1 = require('angular2-jwt');
 var MadameService = (function () {
     function MadameService(_http, _authHttp) {
@@ -85,6 +86,34 @@ var MadameService = (function () {
     MadameService.prototype.put = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
         return this.http.put(this.getURL(server) + url, JSON.stringify(data), { headers: this.defaultHeaders(headers) });
+    };
+    MadameService.prototype.tryAuthPut = function (putQuery, loginObserv) {
+        var _this = this;
+        return rxjs_1.Observable.create(function (observer) {
+            _this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(function (resp) {
+                if (resp.status === 401) {
+                    _this.retryAuthPut(putQuery, loginObserv, observer);
+                }
+                else {
+                    observer.next(resp.json());
+                }
+            }, function (err) {
+                if (err.status === 401) {
+                    _this.retryAuthPut(putQuery, loginObserv, observer);
+                }
+                else {
+                    observer.error(err);
+                }
+            });
+        });
+    };
+    MadameService.prototype.retryAuthPut = function (putQuery, loginObserv, observer) {
+        var _this = this;
+        rxjs_1.Observable.create(function (observ) {
+            loginObserv.next(observ);
+        }).subscribe(function (resp) {
+            _this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(function (resp) { return observer.next(resp.json()); }, function (err) { return observer.error(err); });
+        }, function (err) { return observer.error(err); });
     };
     MadameService.prototype.authDelete = function (url, server) {
         if (server === void 0) { server = 'main'; }

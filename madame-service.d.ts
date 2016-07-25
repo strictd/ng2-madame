@@ -1,5 +1,5 @@
 import { Http, Headers, Response } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable, Observer } from 'rxjs';
 import { AuthHttp } from 'angular2-jwt';
 export interface ServerInfo {
     url: string;
@@ -15,6 +15,12 @@ export interface HeaderInfo {
 }
 export interface HeaderList {
     [index: string]: HeaderInfo;
+}
+export interface MadamePut {
+    url: string;
+    data: any;
+    server?: string;
+    headers?: HeaderList;
 }
 export declare class MadameService {
     serverList: ServerList;
@@ -35,6 +41,8 @@ export declare class MadameService {
     post(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
     authPut(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
     put(url: string, data: Object, server?: string, headers?: HeaderList): Observable<Response>;
+    tryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>): Observable<Response>;
+    retryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>, observer: Observer<any>): void;
     authDelete(url: string, server?: string): Observable<Response>;
     delete(url: string, server?: string): Observable<Response>;
     defaultHeaders(toAdd?: HeaderList): Headers;

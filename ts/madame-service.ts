@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers, Response } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable, Observer } from 'rxjs';
 import { AuthHttp } from 'angular2-jwt';
 
 declare var io: any;
@@ -20,6 +20,13 @@ export interface HeaderInfo {
 }
 export interface HeaderList {
   [index: string]: HeaderInfo;
+}
+
+export interface MadamePut {
+  url: string;
+  data: any;
+  server?: string;
+  headers?: HeaderList;
 }
 
 @Injectable()
@@ -92,6 +99,40 @@ export class MadameService {
   put(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
     return this.http.put(this.getURL(server) + url, JSON.stringify(data), {headers: this.defaultHeaders(headers)});
   }
+  tryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>): Observable<Response> {
+    return Observable.create(observer => {
+      this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(
+        resp => {
+          if (resp.status === 401) { 
+            this.retryAuthPut(putQuery, loginObserv, observer);
+          } else { observer.next(resp.json()); }
+
+        }, err => {
+          if (err.status === 401) { 
+            this.retryAuthPut(putQuery, loginObserv, observer);
+          } else {
+            observer.error(err);
+          }
+        }
+      );
+    });
+  }
+  retryAuthPut(putQuery: MadamePut, loginObserv: Observer<any>, observer: Observer<any>) {
+    Observable.create(observ => {
+      loginObserv.next(observ);
+    }).subscribe(
+      resp => {
+        this.authPut(putQuery.url, putQuery.data, putQuery.server, putQuery.headers).subscribe(
+          resp => observer.next(resp.json()),
+          err => observer.error(err)
+        );
+      },
+      err => observer.error(err)
+    );
+  }
+
+
+
 
   authDelete(url: string, server = 'main'): Observable<Response> {
     return this.authHttp.delete(this.getURL(server) + url);
