@@ -44,6 +44,8 @@ export class MadameService {
   http: Http;
   authHttp: AuthHttp;
 
+  loginObserv: Observer<any>;
+
   constructor(_http: Http, _authHttp: AuthHttp) {
     this.http = _http;
     this.authHttp = _authHttp;
@@ -63,6 +65,10 @@ export class MadameService {
   }
   setCookie(server: string, cookie: string): void {
     this.serverList[server].cookie = cookie;
+  }
+
+  setLoginObserver(observer: Observer<any>) {
+    this.loginObserv = observer;
   }
 
   getServers(): ServerList {
@@ -107,7 +113,7 @@ export class MadameService {
   }
   delete(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
     return this.http.delete(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
-  }  
+  }
 
 
   createAuthQueryFromMethod(query: MadameQuery): Observable<Response> {
@@ -127,19 +133,19 @@ export class MadameService {
     }
   }
 
-  tryMadame(query: MadameQuery, loginObserv: Observer<any>) {
+  tryMadame(query: MadameQuery) {
     return Observable.create(observer => {
       let authQuery = this.createAuthQueryFromMethod(query);
 
       authQuery.subscribe(
         resp => {
-          if (resp.status === 401) { 
-            this.retryMadame(query, loginObserv, observer);
+          if (resp.status === 401) {
+            this.retryMadame(query, observer);
           } else { observer.next(resp); }
 
         }, err => {
-          if (err.status === 401) { 
-            this.retryMadame(query, loginObserv, observer);
+          if (err.status === 401) {
+            this.retryMadame(query, observer);
           } else {
             observer.error(err);
           }
@@ -147,10 +153,10 @@ export class MadameService {
       );
     });
   }
-  
-  retryMadame(query: MadameQuery, loginObserv: Observer<any>, observer: Observer<any>) {
+
+  retryMadame(query: MadameQuery, observer: Observer<any>) {
     Observable.create(observ => {
-      loginObserv.next(observ);
+      this.loginObserv.next(observ);
     }).subscribe(
       resp => {
         if (resp === true) {
@@ -160,7 +166,7 @@ export class MadameService {
             err => observer.error(err)
           );
         } else {
-          this.retryMadame(query, loginObserv, observer);
+          this.retryMadame(query, observer);
         }
       },
       err => observer.error(err)

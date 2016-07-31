@@ -28,10 +28,12 @@ export declare class MadameService {
     serverList: ServerList;
     http: Http;
     authHttp: AuthHttp;
+    loginObserv: Observer<any>;
     constructor(_http: Http, _authHttp: AuthHttp);
     setServer(server: string, url: string, host?: string, cookie?: string): void;
     setHost(server: string, host: string, cookie?: string): void;
     setCookie(server: string, cookie: string): void;
+    setLoginObserver(observer: Observer<any>): void;
     getServers(): ServerList;
     getServer(server: string): ServerInfo;
     getURL(server: string): string;
@@ -46,8 +48,8 @@ export declare class MadameService {
     authDelete(url: string, server?: string, headers?: HeaderList): Observable<Response>;
     delete(url: string, server?: string, headers?: HeaderList): Observable<Response>;
     createAuthQueryFromMethod(query: MadameQuery): Observable<Response>;
-    tryMadame(query: MadameQuery, loginObserv: Observer<any>): any;
-    retryMadame(query: MadameQuery, loginObserv: Observer<any>, observer: Observer<any>): void;
+    tryMadame(query: MadameQuery): any;
+    retryMadame(query: MadameQuery, observer: Observer<any>): void;
     defaultHeaders(toAdd?: HeaderList): Headers;
     addHeaders(toAdd: HeaderList, cur?: Headers): Headers;
     queryString(obj: any): string;

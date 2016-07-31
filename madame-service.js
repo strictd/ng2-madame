@@ -48,6 +48,9 @@ var MadameService = (function () {
     MadameService.prototype.setCookie = function (server, cookie) {
         this.serverList[server].cookie = cookie;
     };
+    MadameService.prototype.setLoginObserver = function (observer) {
+        this.loginObserv = observer;
+    };
     MadameService.prototype.getServers = function () {
         return this.serverList;
     };
@@ -113,20 +116,20 @@ var MadameService = (function () {
             return this.authGet(url, query.server, query.headers);
         }
     };
-    MadameService.prototype.tryMadame = function (query, loginObserv) {
+    MadameService.prototype.tryMadame = function (query) {
         var _this = this;
         return rxjs_1.Observable.create(function (observer) {
             var authQuery = _this.createAuthQueryFromMethod(query);
             authQuery.subscribe(function (resp) {
                 if (resp.status === 401) {
-                    _this.retryMadame(query, loginObserv, observer);
+                    _this.retryMadame(query, observer);
                 }
                 else {
                     observer.next(resp);
                 }
             }, function (err) {
                 if (err.status === 401) {
-                    _this.retryMadame(query, loginObserv, observer);
+                    _this.retryMadame(query, observer);
                 }
                 else {
                     observer.error(err);
@@ -134,17 +137,17 @@ var MadameService = (function () {
             });
         });
     };
-    MadameService.prototype.retryMadame = function (query, loginObserv, observer) {
+    MadameService.prototype.retryMadame = function (query, observer) {
         var _this = this;
         rxjs_1.Observable.create(function (observ) {
-            loginObserv.next(observ);
+            _this.loginObserv.next(observ);
         }).subscribe(function (resp) {
             if (resp === true) {
                 var retryAuthQuery = _this.createAuthQueryFromMethod(query);
                 retryAuthQuery.subscribe(function (resp) { return observer.next(resp); }, function (err) { return observer.error(err); });
             }
             else {
-                _this.retryMadame(query, loginObserv, observer);
+                _this.retryMadame(query, observer);
             }
         }, function (err) { return observer.error(err); });
     };
