@@ -68,11 +68,11 @@ var MadameService = (function () {
     };
     MadameService.prototype.authGet = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.authHttp.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
+        return this.authHttp.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers), body: '' });
     };
     MadameService.prototype.get = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.http.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
+        return this.http.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers), body: '' });
     };
     MadameService.prototype.authPost = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }

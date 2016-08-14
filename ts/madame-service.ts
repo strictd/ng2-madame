@@ -88,10 +88,10 @@ export class MadameService {
   }
 
   authGet(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.authHttp.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
+    return this.authHttp.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers), body: ''});
   }
   get(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.http.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
+    return this.http.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers), body: ''});
   }
 
   authPost(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
