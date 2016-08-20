@@ -14,6 +14,7 @@ var rxjs_1 = require('rxjs');
 var angular2_jwt_1 = require('angular2-jwt');
 var MadameService = (function () {
     function MadameService(_http, _authHttp) {
+        var _this = this;
         this.serverList = {
             'main': {
                 'url': 'http://localhost:3000/',
@@ -21,8 +22,16 @@ var MadameService = (function () {
                 'cookie': document.cookie
             }
         };
+        this.runningQue = false;
+        this.queStash = [];
         this.http = _http;
         this.authHttp = _authHttp;
+        this._que = new rxjs_1.Observable(function (observer) {
+            _this.que = observer;
+        }).share();
+        this._que.subscribe(function (que) {
+            _this.tryQue(que);
+        });
     }
     MadameService.prototype.setServer = function (server, url, host, cookie) {
         if (url.trim().slice(-1) === '\\') {
@@ -68,11 +77,11 @@ var MadameService = (function () {
     };
     MadameService.prototype.authGet = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.authHttp.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers), body: '' });
+        return this.authHttp.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.get = function (url, server, headers) {
         if (server === void 0) { server = 'main'; }
-        return this.http.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers), body: '' });
+        return this.http.get("" + this.getURL(server) + url, { headers: this.defaultHeaders(headers) });
     };
     MadameService.prototype.authPost = function (url, data, server, headers) {
         if (server === void 0) { server = 'main'; }
@@ -117,39 +126,61 @@ var MadameService = (function () {
         }
     };
     MadameService.prototype.tryMadame = function (query) {
+        return this.queueMadame(query);
+    };
+    MadameService.prototype.queueMadame = function (query) {
         var _this = this;
         return rxjs_1.Observable.create(function (observer) {
-            var authQuery = _this.createAuthQueryFromMethod(query);
-            authQuery.subscribe(function (resp) {
-                if (resp.status === 401) {
-                    _this.retryMadame(query, observer);
-                }
-                else {
-                    observer.next(resp);
-                }
-            }, function (err) {
-                if (err.status === 401) {
-                    _this.retryMadame(query, observer);
-                }
-                else {
-                    observer.error(err);
-                }
-            });
+            var userQue = {
+                query: query,
+                observer: observer
+            };
+            _this.que.next(userQue);
         });
     };
-    MadameService.prototype.retryMadame = function (query, observer) {
+    MadameService.prototype.tryQue = function (que) {
         var _this = this;
-        rxjs_1.Observable.create(function (observ) {
-            _this.loginObserv.next(observ);
-        }).subscribe(function (resp) {
-            if (resp === true) {
-                var retryAuthQuery = _this.createAuthQueryFromMethod(query);
-                retryAuthQuery.subscribe(function (resp) { return observer.next(resp); }, function (err) { return observer.error(err); });
+        var authQuery = this.createAuthQueryFromMethod(que.query);
+        authQuery.subscribe(function (resp) {
+            if (resp.status === 401) {
+                _this.queStash.push(que);
+                if (!_this.reauthObservable) {
+                    _this.reauthMadame();
+                }
             }
             else {
-                _this.retryMadame(query, observer);
+                que.observer.next(resp);
+                que.observer.complete();
             }
-        }, function (err) { return observer.error(err); });
+        }, function (err) {
+            if (err.status === 401) {
+                _this.queStash.push(que);
+                if (!_this.reauthObservable) {
+                    _this.reauthMadame();
+                }
+            }
+            else {
+                que.observer.error(err);
+                que.observer.complete();
+            }
+        });
+    };
+    MadameService.prototype.rerunQueStash = function () {
+        this.reauthObservable = null;
+        var myQueStash = Object.assign({}, this.queStash);
+        do {
+            var q = this.queStash.shift();
+            this.tryQue(q);
+        } while (this.queStash !== void 0 && this.queStash.length);
+    };
+    MadameService.prototype.reauthMadame = function () {
+        var _this = this;
+        this.reauthObservable = rxjs_1.Observable.create(function (observ) {
+            _this.loginObserv.next(observ);
+        });
+        this.reauthObservable.subscribe(function (resp) { }, function (err) {
+            _this.reauthMadame();
+        }, function () { return _this.rerunQueStash(); });
     };
     MadameService.prototype.defaultHeaders = function (toAdd) {
         var headers = new http_1.Headers();

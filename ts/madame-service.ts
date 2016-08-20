@@ -31,6 +31,11 @@ export interface MadameQuery {
   headers?: HeaderList;
 }
 
+export interface MadameQue {
+  query: MadameQuery,
+  observer: Observer<any>
+}
+
 @Injectable()
 export class MadameService {
   serverList: ServerList = {
@@ -46,10 +51,26 @@ export class MadameService {
 
   loginObserv: Observer<any>;
 
+  madameInterval: Observable<any>;
+  runningQue = false;
+
+  _que: Observable<any>;
+  que: Observer<any>;
+  queStash: MadameQue[] = [];
+
   constructor(_http: Http, _authHttp: AuthHttp) {
     this.http = _http;
     this.authHttp = _authHttp;
+
+    this._que = new Observable(observer => {
+      this.que = observer; // Assign to static App._loggedInObserver
+    }).share();
+
+    this._que.subscribe((que: MadameQue) => {
+      this.tryQue(que);
+    });
   }
+
 
   setServer(server: string, url: string, host?: string, cookie?: string): void {
     if (url.trim().slice(-1) === '\\') { url = url.substring(0, url.length - 1); }
@@ -88,10 +109,10 @@ export class MadameService {
   }
 
   authGet(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.authHttp.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers), body: ''});
+    return this.authHttp.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
   }
   get(url: string, server = 'main', headers?: HeaderList): Observable<Response> {
-    return this.http.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers), body: ''});
+    return this.http.get(`${this.getURL(server)}${url}`, {headers: this.defaultHeaders(headers)});
   }
 
   authPost(url: string, data: Object, server = 'main', headers?: HeaderList): Observable<Response> {
@@ -134,44 +155,69 @@ export class MadameService {
   }
 
   tryMadame(query: MadameQuery) {
+    return this.queueMadame(query);
+  }
+  queueMadame(query: MadameQuery) {
     return Observable.create(observer => {
-      let authQuery = this.createAuthQueryFromMethod(query);
-
-      authQuery.subscribe(
-        resp => {
-          if (resp.status === 401) {
-            this.retryMadame(query, observer);
-          } else { observer.next(resp); }
-
-        }, err => {
-          if (err.status === 401) {
-            this.retryMadame(query, observer);
-          } else {
-            observer.error(err);
-          }
-        }
-      );
+      let userQue = <MadameQue>{
+        query: query,
+        observer: observer
+      };
+      this.que.next(userQue);
     });
   }
 
-  retryMadame(query: MadameQuery, observer: Observer<any>) {
-    Observable.create(observ => {
-      this.loginObserv.next(observ);
-    }).subscribe(
+  tryQue(que: MadameQue) {
+    let authQuery = this.createAuthQueryFromMethod(que.query);
+
+    authQuery.subscribe(
       resp => {
-        if (resp === true) {
-          let retryAuthQuery = this.createAuthQueryFromMethod(query);
-          retryAuthQuery.subscribe(
-            resp => observer.next(resp),
-            err => observer.error(err)
-          );
+        if (resp.status === 401) {
+          this.queStash.push(que);
+          if (!this.reauthObservable) { this.reauthMadame(); }
         } else {
-          this.retryMadame(query, observer);
+          que.observer.next(resp);
+          que.observer.complete();
         }
-      },
-      err => observer.error(err)
+
+      }, err => {
+        if (err.status === 401) {
+          this.queStash.push(que);
+          if (!this.reauthObservable) { this.reauthMadame(); }
+        } else {
+          que.observer.error(err);
+          que.observer.complete();
+        }
+      }
     );
   }
+
+  rerunQueStash() {
+    this.reauthObservable = null;
+    let myQueStash = Object.assign({}, this.queStash);
+    //this.queStash = [];
+
+    do {
+      let q = this.queStash.shift();
+      this.tryQue(q);
+    } while (this.queStash !== void 0 && this.queStash.length);
+  }
+
+  reauthObservable: Observable<any>;
+  reauthMadame() {
+    this.reauthObservable = Observable.create(observ => {
+      this.loginObserv.next(observ);
+    });
+
+    this.reauthObservable.subscribe(
+      resp => {},
+      err => {
+        this.reauthMadame();
+      },
+      () => this.rerunQueStash()
+    );
+  }
+
 
 
 

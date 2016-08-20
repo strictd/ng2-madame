@@ -24,11 +24,20 @@ export interface MadameQuery {
     server?: string;
     headers?: HeaderList;
 }
+export interface MadameQue {
+    query: MadameQuery;
+    observer: Observer<any>;
+}
 export declare class MadameService {
     serverList: ServerList;
     http: Http;
     authHttp: AuthHttp;
     loginObserv: Observer<any>;
+    madameInterval: Observable<any>;
+    runningQue: boolean;
+    _que: Observable<any>;
+    que: Observer<any>;
+    queStash: MadameQue[];
     constructor(_http: Http, _authHttp: AuthHttp);
     setServer(server: string, url: string, host?: string, cookie?: string): void;
     setHost(server: string, host: string, cookie?: string): void;
@@ -49,7 +58,11 @@ export declare class MadameService {
     delete(url: string, server?: string, headers?: HeaderList): Observable<Response>;
     createAuthQueryFromMethod(query: MadameQuery): Observable<Response>;
     tryMadame(query: MadameQuery): any;
-    retryMadame(query: MadameQuery, observer: Observer<any>): void;
+    queueMadame(query: MadameQuery): any;
+    tryQue(que: MadameQue): void;
+    rerunQueStash(): void;
+    reauthObservable: Observable<any>;
+    reauthMadame(): void;
     defaultHeaders(toAdd?: HeaderList): Headers;
     addHeaders(toAdd: HeaderList, cur?: Headers): Headers;
     queryString(obj: any): string;
