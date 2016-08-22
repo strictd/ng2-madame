@@ -23,7 +23,9 @@ var MadameService = (function () {
             }
         };
         this.runningQue = false;
+        this.madameCounter = 0;
         this.queStash = [];
+        this._runningCount = 0;
         this.http = _http;
         this.authHttp = _authHttp;
         this._que = new rxjs_1.Observable(function (observer) {
@@ -31,6 +33,12 @@ var MadameService = (function () {
         }).share();
         this._que.subscribe(function (que) {
             _this.tryQue(que);
+        });
+        this.needsAuth = new rxjs_1.Observable(function (observer) {
+            _this._needsAuth = observer;
+        });
+        this.running = new rxjs_1.Observable(function (observer) {
+            _this._running = observer;
         });
     }
     MadameService.prototype.setServer = function (server, url, host, cookie) {
@@ -59,6 +67,12 @@ var MadameService = (function () {
     };
     MadameService.prototype.setLoginObserver = function (observer) {
         this.loginObserv = observer;
+    };
+    MadameService.prototype.getAuthHook = function () {
+        return this.needsAuth;
+    };
+    MadameService.prototype.getRunningHook = function () {
+        return this.running;
     };
     MadameService.prototype.getServers = function () {
         return this.serverList;
@@ -125,9 +139,6 @@ var MadameService = (function () {
             return this.authGet(url, query.server, query.headers);
         }
     };
-    MadameService.prototype.tryMadame = function (query) {
-        return this.queueMadame(query);
-    };
     MadameService.prototype.queueMadame = function (query) {
         var _this = this;
         return rxjs_1.Observable.create(function (observer) {
@@ -141,46 +152,75 @@ var MadameService = (function () {
     MadameService.prototype.tryQue = function (que) {
         var _this = this;
         var authQuery = this.createAuthQueryFromMethod(que.query);
+        que.running = true;
+        this.updateRunningCount(1);
         authQuery.subscribe(function (resp) {
             if (resp.status === 401) {
-                _this.queStash.push(que);
-                if (!_this.reauthObservable) {
-                    _this.reauthMadame();
-                }
+                que.error = "401";
+                _this.queStash.unshift(que);
+                _this.reauthMadame();
             }
             else {
                 que.observer.next(resp);
                 que.observer.complete();
             }
+            que.running = false;
+            _this.updateRunningCount(-1);
         }, function (err) {
             if (err.status === 401) {
-                _this.queStash.push(que);
-                if (!_this.reauthObservable) {
-                    _this.reauthMadame();
-                }
+                que.error = "401";
+                _this.queStash.unshift(que);
+                _this.reauthMadame();
             }
             else {
+                que.error = err;
                 que.observer.error(err);
                 que.observer.complete();
             }
+            que.running = false;
+            _this.updateRunningCount(-1);
         });
     };
     MadameService.prototype.rerunQueStash = function () {
         this.reauthObservable = null;
-        var myQueStash = Object.assign({}, this.queStash);
+        if (!this.queStash.length) {
+            return;
+        }
         do {
             var q = this.queStash.shift();
             this.tryQue(q);
-        } while (this.queStash !== void 0 && this.queStash.length);
+        } while (!this.reauthObservable && this.queStash !== void 0 && this.queStash.length);
     };
     MadameService.prototype.reauthMadame = function () {
         var _this = this;
+        if (this.reauthObservable) {
+            return;
+        }
         this.reauthObservable = rxjs_1.Observable.create(function (observ) {
             _this.loginObserv.next(observ);
         });
-        this.reauthObservable.subscribe(function (resp) { }, function (err) {
+        this.reauthObservable.subscribe(function (resp) {
+            if (resp === true) {
+                _this._needsAuth.next(false);
+                _this.rerunQueStash();
+            }
+            else {
+                _this._needsAuth.next(true);
+            }
+        }, function (err) {
             _this.reauthMadame();
-        }, function () { return _this.rerunQueStash(); });
+        }, function () {
+            _this.reauthObservable = null;
+        });
+    };
+    MadameService.prototype.updateRunningCount = function (by) {
+        this._runningCount += by;
+        if (this._runningCount === 1) {
+            this._running.next(true);
+        }
+        else if (this._runningCount === 0) {
+            this._running.next(false);
+        }
     };
     MadameService.prototype.defaultHeaders = function (toAdd) {
         var headers = new http_1.Headers();

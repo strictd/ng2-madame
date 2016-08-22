@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers, Response } from '@angular/http';
-import { Observable, Observer } from 'rxjs';
-import { AuthHttp } from 'angular2-jwt';
+import { Observable, Observer, Subscription } from 'rxjs';
+import { AuthHttp, tokenNotExpired } from 'angular2-jwt';
 
 declare var io: any;
 
@@ -33,7 +33,9 @@ export interface MadameQuery {
 
 export interface MadameQue {
   query: MadameQuery,
-  observer: Observer<any>
+  observer: Observer<any>,
+  running?: boolean,
+  error?: string
 }
 
 @Injectable()
@@ -53,22 +55,37 @@ export class MadameService {
 
   madameInterval: Observable<any>;
   runningQue = false;
+  madameCounter = 0;
 
   _que: Observable<any>;
   que: Observer<any>;
   queStash: MadameQue[] = [];
+  _needsAuth: Observer<boolean>;
+  needsAuth: Observable<any>;
+  _runningCount: number = 0;
+  _running: Observer<boolean>;
+  running: Observable<any>;
 
   constructor(_http: Http, _authHttp: AuthHttp) {
     this.http = _http;
     this.authHttp = _authHttp;
 
     this._que = new Observable(observer => {
-      this.que = observer; // Assign to static App._loggedInObserver
+      this.que = observer;
     }).share();
 
     this._que.subscribe((que: MadameQue) => {
       this.tryQue(que);
     });
+
+    this.needsAuth = new Observable(observer => {
+      this._needsAuth = observer;
+    });
+
+    this.running = new Observable(observer => {
+      this._running = observer;
+    })
+
   }
 
 
@@ -88,8 +105,16 @@ export class MadameService {
     this.serverList[server].cookie = cookie;
   }
 
-  setLoginObserver(observer: Observer<any>) {
+  setLoginObserver(observer: Observer<any>): void {
     this.loginObserv = observer;
+  }
+
+  getAuthHook(): Observable<boolean> {
+    return this.needsAuth;
+  }
+
+  getRunningHook(): Observable<boolean> {
+    return this.running;
   }
 
   getServers(): ServerList {
@@ -154,70 +179,97 @@ export class MadameService {
     }
   }
 
-  tryMadame(query: MadameQuery) {
-    return this.queueMadame(query);
-  }
   queueMadame(query: MadameQuery) {
     return Observable.create(observer => {
       let userQue = <MadameQue>{
         query: query,
         observer: observer
       };
-      this.que.next(userQue);
+      // if (tokenNotExpired('jwt')) {
+        this.que.next(userQue);
+      // } else {
+      //   this.queStash.push(userQue);
+      //   this.reauthMadame();
+      // }
     });
   }
 
   tryQue(que: MadameQue) {
     let authQuery = this.createAuthQueryFromMethod(que.query);
+    que.running = true;
+    this.updateRunningCount(1);
 
     authQuery.subscribe(
       resp => {
         if (resp.status === 401) {
-          this.queStash.push(que);
-          if (!this.reauthObservable) { this.reauthMadame(); }
+          que.error = "401";
+          this.queStash.unshift(que);
+          this.reauthMadame();
         } else {
           que.observer.next(resp);
           que.observer.complete();
         }
 
+        que.running = false;
+        this.updateRunningCount(-1);
       }, err => {
         if (err.status === 401) {
-          this.queStash.push(que);
-          if (!this.reauthObservable) { this.reauthMadame(); }
+          que.error = "401";
+          this.queStash.unshift(que);
+          this.reauthMadame();
         } else {
+          que.error = err;
           que.observer.error(err);
           que.observer.complete();
         }
+
+        que.running = false;
+        this.updateRunningCount(-1);
       }
     );
   }
 
   rerunQueStash() {
     this.reauthObservable = null;
-    let myQueStash = Object.assign({}, this.queStash);
-    //this.queStash = [];
+    if (!this.queStash.length) { return; }
 
     do {
       let q = this.queStash.shift();
       this.tryQue(q);
-    } while (this.queStash !== void 0 && this.queStash.length);
+    } while (!this.reauthObservable && this.queStash !== void 0 && this.queStash.length);
   }
 
   reauthObservable: Observable<any>;
   reauthMadame() {
+    if (this.reauthObservable) { return; }
+
     this.reauthObservable = Observable.create(observ => {
       this.loginObserv.next(observ);
     });
 
     this.reauthObservable.subscribe(
-      resp => {},
+      resp => {
+        if (resp === true) {
+          this._needsAuth.next(false);
+          this.rerunQueStash();
+        } else {
+          this._needsAuth.next(true);
+        }
+      },
       err => {
         this.reauthMadame();
       },
-      () => this.rerunQueStash()
+      () => {
+        this.reauthObservable = null;
+      }
     );
   }
 
+  updateRunningCount(by: number) {
+    this._runningCount += by;
+    if (this._runningCount === 1) { this._running.next(true); }
+    else if (this._runningCount === 0) { this._running.next(false); }
+  }
 
 
 
