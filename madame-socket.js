@@ -31,7 +31,7 @@ var MadameSocket = (function (_super) {
         };
     }
     MadameSocket.prototype.setServer = function (server, url, host, cookie) {
-        if (url.trim().slice(-1) == '/' || url.trim().slice(-1) === '\\') {
+        if (url.trim().slice(-1) === '/' || url.trim().slice(-1) === '\\') {
             url = url.substring(0, url.length - 1);
         }
         this.serverList[server].url = url;
@@ -77,6 +77,9 @@ var MadameSocket = (function (_super) {
         });
         this.sockets[server].calls = {};
         var _loop_1 = function(socket) {
+            if (!this_1.sockets.hasOwnProperty(socket)) {
+                return "continue";
+            }
             this_1.sockets[socket].connect = Rx.Observable.create(function (observer) {
                 var ob = observer;
                 _t.sockets[socket].io.on('connect', function () { ob.next(true); });

@@ -1,3 +1,4 @@
+/// <reference types="core-js" />
 import { Http, Headers, Response } from '@angular/http';
 import { Observable, Observer } from 'rxjs';
 import { AuthHttp } from 'angular2-jwt';
@@ -46,6 +47,7 @@ export declare class MadameService {
     _runningCount: number;
     _running: Observer<boolean>;
     running: Observable<any>;
+    reauthObservable: Observable<any>;
     constructor(_http: Http, _authHttp: AuthHttp);
     setServer(server: string, url: string, host?: string, cookie?: string): void;
     setHost(server: string, host: string, cookie?: string): void;
@@ -70,7 +72,6 @@ export declare class MadameService {
     queueMadame(query: MadameQuery): any;
     tryQue(que: MadameQue): void;
     rerunQueStash(): void;
-    reauthObservable: Observable<any>;
     reauthMadame(): void;
     updateRunningCount(by: number): void;
     defaultHeaders(toAdd?: HeaderList): Headers;

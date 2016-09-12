@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import * as Rx from 'rxjs/Rx';
-import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
 import { MadameService, ServerList, ServerInfo } from './madame-service';
@@ -20,7 +19,7 @@ export class MadameSocket extends MadameService {
   };
 
   setServer(server: string, url: string, host?: string, cookie?: string): void {
-    if (url.trim().slice(-1) == '/' || url.trim().slice(-1) === '\\') { url = url.substring(0, url.length - 1); }
+    if (url.trim().slice(-1) === '/' || url.trim().slice(-1) === '\\') { url = url.substring(0, url.length - 1); }
 
     this.serverList[server].url = url;
     if (typeof host !== 'undefined') { this.setHost(server, host); }
@@ -63,6 +62,8 @@ export class MadameSocket extends MadameService {
 
 
     for (let socket in this.sockets) {
+      if (!this.sockets.hasOwnProperty(socket)) { continue; }
+
       this.sockets[socket].connect = Rx.Observable.create(function(observer: Observer<any>) {
         let ob = observer;
         _t.sockets[socket].io.on('connect', function() { ob.next(true); });
@@ -74,7 +75,7 @@ export class MadameSocket extends MadameService {
 
 
 
-      //console.log('load socket: ', socket);
+      // console.log('load socket: ', socket);
       this.sockets[socket].connect.subscribe(() => {
         _t.sockets[socket].io.on('authenticated', function () {
 
@@ -82,7 +83,7 @@ export class MadameSocket extends MadameService {
         .emit('authenticate', { token: jwt });
       });
 
-      //this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.serverList[server].host, cookie: this.serverList[server].cookie }));
+      // this.sockets[socket].connect.subscribe(() => _t.sockets[socket].io.emit('authenticate', {host: this.serverList[server].host, cookie: this.serverList[server].cookie }));
       this.sockets[socket].auth.subscribe((data: any) => {
         console.log('We have authed');
       });

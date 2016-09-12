@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers, Response } from '@angular/http';
-import { Observable, Observer, Subscription } from 'rxjs';
-import { AuthHttp, tokenNotExpired } from 'angular2-jwt';
+import { Observable, Observer } from 'rxjs';
+import { AuthHttp } from 'angular2-jwt';
 
 declare var io: any;
 
@@ -32,10 +32,10 @@ export interface MadameQuery {
 }
 
 export interface MadameQue {
-  query: MadameQuery,
-  observer: Observer<any>,
-  running?: boolean,
-  error?: string
+  query: MadameQuery;
+  observer: Observer<any>;
+  running?: boolean;
+  error?: string;
 }
 
 @Injectable()
@@ -66,11 +66,13 @@ export class MadameService {
   _running: Observer<boolean>;
   running: Observable<any>;
 
+  reauthObservable: Observable<any>;
+
   constructor(_http: Http, _authHttp: AuthHttp) {
     this.http = _http;
     this.authHttp = _authHttp;
 
-    this._que = new Observable(observer => {
+    this._que = new Observable((observer: Observer<any>) => {
       this.que = observer;
     }).share();
 
@@ -78,13 +80,13 @@ export class MadameService {
       this.tryQue(que);
     });
 
-    this.needsAuth = new Observable(observer => {
+    this.needsAuth = new Observable((observer: Observer<any>) => {
       this._needsAuth = observer;
     });
 
-    this.running = new Observable(observer => {
+    this.running = new Observable((observer: Observer<any>) => {
       this._running = observer;
-    })
+    });
 
   }
 
@@ -180,7 +182,7 @@ export class MadameService {
   }
 
   queueMadame(query: MadameQuery) {
-    return Observable.create(observer => {
+    return Observable.create((observer: Observer<any>) => {
       let userQue = <MadameQue>{
         query: query,
         observer: observer
@@ -202,7 +204,7 @@ export class MadameService {
     authQuery.subscribe(
       resp => {
         if (resp.status === 401) {
-          que.error = "401";
+          que.error = '401';
           this.queStash.unshift(que);
           this.reauthMadame();
         } else {
@@ -214,7 +216,7 @@ export class MadameService {
         this.updateRunningCount(-1);
       }, err => {
         if (err.status === 401) {
-          que.error = "401";
+          que.error = '401';
           this.queStash.unshift(que);
           this.reauthMadame();
         } else {
@@ -239,11 +241,10 @@ export class MadameService {
     } while (!this.reauthObservable && this.queStash !== void 0 && this.queStash.length);
   }
 
-  reauthObservable: Observable<any>;
   reauthMadame() {
     if (this.reauthObservable) { return; }
 
-    this.reauthObservable = Observable.create(observ => {
+    this.reauthObservable = Observable.create((observ: Observer<any>) => {
       this.loginObserv.next(observ);
     });
 
@@ -267,8 +268,9 @@ export class MadameService {
 
   updateRunningCount(by: number) {
     this._runningCount += by;
-    if (this._runningCount === 1) { this._running.next(true); }
-    else if (this._runningCount === 0) { this._running.next(false); }
+    if (this._runningCount === 1) {
+      this._running.next(true);
+    } else if (this._runningCount === 0) { this._running.next(false); }
   }
 
 
@@ -279,14 +281,16 @@ export class MadameService {
     let headers = new Headers();
     headers.append('Accept', 'application/json');
     headers.append('Content-Type', 'application/json');
-    if (toAdd) headers = this.addHeaders(toAdd, headers);
+    if (toAdd) { headers = this.addHeaders(toAdd, headers); }
   return headers;
   }
   addHeaders(toAdd: HeaderList, cur?: Headers ): Headers {
-    if (!cur) cur = new Headers();
+    if (!cur) { cur = new Headers(); }
 
     for (let h in toAdd) {
-      cur.append(toAdd[h].key, toAdd[h].val);
+      if (toAdd.hasOwnProperty(h)) {
+        cur.append(toAdd[h].key, toAdd[h].val);
+      }
     }
     return cur;
   }

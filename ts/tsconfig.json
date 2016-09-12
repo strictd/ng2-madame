@@ -1,22 +1,28 @@
 {
-    "version": "1.8.10",
-    "compilerOptions": {
-        "outDir": "../",
-        "target": "es5",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "removeComments": true,
-        "noLib": false,
-        "preserveConstEnums": true,
-        "sourceMap": true,
-        "noImplicitAny": false,
-        "declaration": true
-    },
-    "exclude": [
-        "node_modules",
-        "typings/browser.d.ts",
-        "typings/browser"
-    ]
+  "version": "2.0.2",
+  "compilerOptions": {
+    "outDir": "../",
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "removeComments": true,
+    "noLib": false,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "declaration": true
+  },
+  "files": [
+    "madame-service.ts",
+    "madame-socket.ts",
+    "headers.ts"
+  ],
+  "filesGlob": [
+    "!node_modules/**/*"
+  ],    
+  "exclude": [
+    "node_modules"
+  ]
 }

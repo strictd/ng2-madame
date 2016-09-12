@@ -1,3 +1,4 @@
+/// <reference types="core-js" />
 import { MadameService, ServerList, ServerInfo } from './madame-service';
 export declare class MadameSocket extends MadameService {
     sockets: any;

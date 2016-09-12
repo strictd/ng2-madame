@@ -156,7 +156,7 @@ var MadameService = (function () {
         this.updateRunningCount(1);
         authQuery.subscribe(function (resp) {
             if (resp.status === 401) {
-                que.error = "401";
+                que.error = '401';
                 _this.queStash.unshift(que);
                 _this.reauthMadame();
             }
@@ -168,7 +168,7 @@ var MadameService = (function () {
             _this.updateRunningCount(-1);
         }, function (err) {
             if (err.status === 401) {
-                que.error = "401";
+                que.error = '401';
                 _this.queStash.unshift(que);
                 _this.reauthMadame();
             }
@@ -226,15 +226,19 @@ var MadameService = (function () {
         var headers = new http_1.Headers();
         headers.append('Accept', 'application/json');
         headers.append('Content-Type', 'application/json');
-        if (toAdd)
+        if (toAdd) {
             headers = this.addHeaders(toAdd, headers);
+        }
         return headers;
     };
     MadameService.prototype.addHeaders = function (toAdd, cur) {
-        if (!cur)
+        if (!cur) {
             cur = new http_1.Headers();
+        }
         for (var h in toAdd) {
-            cur.append(toAdd[h].key, toAdd[h].val);
+            if (toAdd.hasOwnProperty(h)) {
+                cur.append(toAdd[h].key, toAdd[h].val);
+            }
         }
         return cur;
     };
