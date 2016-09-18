@@ -7,9 +7,9 @@
   "author": "Gary <gravity.addiction@gmail.com>",
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
-    "@angular/core": "^2.0.0-rc.6",
-    "@angular/common": "^2.0.0-rc.6",
-    "@angular/http": "2.0.0-rc.6",
+    "@angular/core": "^2.0.0",
+    "@angular/common": "^2.0.0",
+    "@angular/http": "2.0.0",
     "angular2-jwt": "^0.1.15"
   },
   "devDependencies": {
@@ -21,6 +21,6 @@
     "tslint": "^3.3.0",
     "tslint-stylish": "^2.1.0-beta",
     "typescript": "^2.0.2",
-    "zone.js": "^0.6.17"
+    "zone.js": "^0.6.21"
   }
 }
