@@ -1,7 +1,7 @@
 {
   "version": "2.0.2",
   "compilerOptions": {
-    "outDir": "../",
+    "outDir": "./",
     "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
@@ -15,13 +15,11 @@
     "declaration": true
   },
   "files": [
-    "madame-service.ts",
-    "madame-socket.ts",
-    "headers.ts"
-  ],
-  "filesGlob": [
-    "!node_modules/**/*"
-  ],    
+    "src/index.ts",
+    "src/madame-service.ts",
+    "src/madame-socket.ts",
+    "src/headers.ts"
+  ], 
   "exclude": [
     "node_modules"
   ]
