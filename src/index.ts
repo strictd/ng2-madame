@@ -9,3 +9,4 @@ import { MadameSocket } from './madame-socket';
   exports:      [ MadameService, MadameSocket ]
 })
 export class MadameModule { }
+
